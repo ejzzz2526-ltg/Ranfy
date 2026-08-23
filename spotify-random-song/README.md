@@ -85,16 +85,10 @@ gunicorn --bind 0.0.0.0:8000 app:app
 Deployment checklist:
 
 - Set `SPOTIFY_CLIENT_ID` / `SPOTIFY_CLIENT_SECRET` as environment variables
-  on your host (don't upload your `.env` file).
-- Run `init_db.py` once on the server, then `import_songs.py` to populate
-  `songs.db`. Re-run `import_songs.py` periodically (e.g. a weekly cron job)
-  to refresh the catalog — this never affects the live site's uptime since
-  it writes to the database independently of the running web process.
+  on your host (don't upload your `.env` file)..
 - Put a reverse proxy (nginx, or your host's built-in one) in front of
   gunicorn for TLS/HTTPS.
-- `songs.db` should be on persistent storage — if your host uses ephemeral
-  filesystems (e.g. some serverless platforms), point `DB_PATH` at a mounted
-  volume, or use a managed SQLite service (e.g. Turso/LiteFS) instead.
+
 
 ## Google AdSense
 
