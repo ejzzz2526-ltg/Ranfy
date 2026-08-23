@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ranfy.onrender.com/sitemap.xml
