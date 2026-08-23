@@ -68,7 +68,7 @@ python app.py
 
 Visit http://localhost:5000 — click **Random Song**.
 
-## 5. Deploying
+## 4. Deploying
 
 This is a small Flask app, so it runs well on any
 low-cost host that supports Python (e.g. a small VM, Render, Railway, Fly.io,
