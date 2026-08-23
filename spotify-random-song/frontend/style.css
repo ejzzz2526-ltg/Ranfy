@@ -173,6 +173,24 @@ body {
 }
 
 /* ---------------------------------------------------------
+   Spotify embed player
+--------------------------------------------------------- */
+.embed-wrapper {
+  width: 100%;
+  margin-bottom: 14px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  box-shadow:
+    6px 6px 14px var(--shadow-dark),
+    -6px -6px 14px var(--shadow-light);
+}
+
+.embed-wrapper__iframe {
+  display: block;
+  border: none;
+}
+
+/* ---------------------------------------------------------
    Buttons — puffy clay, pressable
 --------------------------------------------------------- */
 .btn {

@@ -38,6 +38,10 @@ function renderSong(song) {
 
   songTitle.textContent = song.title;
   artistName.textContent = song.artist;
+  const embedWrapper = document.getElementById("embedWrapper");
+  const embedPlayer = document.getElementById("embedPlayer");
+  embedPlayer.src = `https://open.spotify.com/embed/track/${song.track_id}`;
+  embedWrapper.hidden = false;
 
   spotifyLink.href = song.spotify_url;
   spotifyLink.hidden = false;
@@ -49,6 +53,7 @@ function renderError() {
   songTitle.textContent = "Couldn't load a song";
   artistName.textContent = "Try again in a moment.";
   spotifyLink.hidden = true;
+  document.getElementById("embedWrapper").hidden = true;
 }
 
 function setLoading(isLoading) {

@@ -2,10 +2,7 @@
 app.py
 
 Flask backend that calls the Spotify Web API live, on every request.
-No database, no local storage of Spotify Content — this fully sidesteps
-Spotify's rules around caching/storing content, since nothing is retained
-between requests except a short-lived access token (which is credentials,
-not "Spotify Content").
+No database, no local storage of Spotify Content.
 
 Flow per request to GET /api/random-song:
     1. Get a valid Client Credentials access token (reused in memory until
@@ -13,7 +10,8 @@ Flow per request to GET /api/random-song:
     2. Pick a random search query from SPOTIFY_SEARCH_QUERIES and a random
        offset, call Spotify's Search endpoint.
     3. Pick one random track out of the returned results.
-    4. Return its metadata directly to the frontend. Nothing is saved.
+    4. Return its metadata (including track_id, used to build the embed
+       player) directly to the frontend. Nothing is saved.
 """
 
 import os
@@ -33,10 +31,7 @@ SEARCH_QUERIES = [
     q.strip() for q in os.getenv("SPOTIFY_SEARCH_QUERIES", "").split(",") if q.strip()
 ]
 
-# How far into search results we're willing to jump for variety.
-# Spotify search offsets must be multiples of the page size (10) and Spotify
-# caps how deep you can page — keep this modest to stay reliable.
-MAX_OFFSET = int(os.getenv("SPOTIFY_MAX_OFFSET", "190"))  # 0,10,20...190
+MAX_OFFSET = int(os.getenv("SPOTIFY_MAX_OFFSET", "190"))
 RESULTS_PER_PAGE = 10
 
 TOKEN_URL = "https://accounts.spotify.com/api/token"
@@ -46,8 +41,6 @@ FRONTEND_DIR = Path(__file__).resolve().parent.parent / "frontend"
 
 app = Flask(__name__, static_folder=str(FRONTEND_DIR), static_url_path="")
 
-# In-memory only — this is an auth token, not Spotify Content, so caching it
-# briefly is just normal API-client behavior, not a content-storage concern.
 _token_cache = {"access_token": None, "expires_at": 0}
 
 
@@ -57,7 +50,6 @@ def get_access_token() -> str:
             "Missing SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET environment variables."
         )
 
-    # Reuse the cached token if it still has more than 60 seconds of life left.
     if _token_cache["access_token"] and time.time() < _token_cache["expires_at"] - 60:
         return _token_cache["access_token"]
 
@@ -83,6 +75,7 @@ def extract_metadata(track: dict):
             return None
 
         return {
+            "track_id": track["id"],
             "title": track["name"],
             "artist": ", ".join(a["name"] for a in track["artists"]),
             "album": track["album"]["name"],
@@ -94,7 +87,6 @@ def extract_metadata(track: dict):
 
 
 def fetch_random_track(max_attempts: int = 4):
-    """Tries a few random query/offset combos until it finds a usable track."""
     if not SEARCH_QUERIES:
         raise RuntimeError(
             "No search queries configured. Set SPOTIFY_SEARCH_QUERIES in your "
@@ -118,7 +110,6 @@ def fetch_random_track(max_attempts: int = 4):
         resp = requests.get(SEARCH_URL, headers=headers, params=params, timeout=10)
 
         if resp.status_code == 401:
-            # Token expired/invalid mid-flight — refresh once and retry immediately.
             _token_cache["access_token"] = None
             token = get_access_token()
             headers = {"Authorization": f"Bearer {token}"}
@@ -132,7 +123,7 @@ def fetch_random_track(max_attempts: int = 4):
         resp.raise_for_status()
         tracks = resp.json().get("tracks", {}).get("items", [])
         if not tracks:
-            continue  # this query/offset combo had nothing — try another
+            continue
 
         candidate = extract_metadata(random.choice(tracks))
         if candidate:
