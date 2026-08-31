@@ -3,6 +3,7 @@
 --------------------------------------------------------- */
 :root {
   --white: #ffffff;
+  --card-bg: #ffffff;
   --bg: #eef1f8;
   --navy: #101b45;
   --navy-mid: #24316b;
@@ -40,53 +41,25 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---------------------------------------------------------
-   Reserved ad slots — empty placeholders for future AdSense
---------------------------------------------------------- */
-.ad-slot {
-  width: 100%;
-  max-width: 728px;
-  min-height: 90px;
-  margin: 16px auto 0;
-  border-radius: var(--radius-sm);
-  border: 1.5px dashed var(--shadow-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--navy-soft);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  opacity: 0.55;
-}
-
-.ad-slot--bottom {
-  margin: 24px auto 0;
+/* Smoothly animate the theme change when a new song's color is applied */
+body,
+.card,
+.sidebar,
+.cover-frame,
+.btn,
+.track-info__title,
+.track-info__artist,
+.attribution,
+.embed-wrapper {
+  transition: background-color 0.6s ease, box-shadow 0.6s ease, color 0.6s ease;
 }
 
 /* ---------------------------------------------------------
-   Layout
+   Header
 --------------------------------------------------------- */
-.page {
-  width: 100%;
-  max-width: 460px;
-  padding: 32px 20px 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-}
-
 .brand {
   text-align: center;
-  margin-bottom: 28px;
-}
-
-.brand__mark {
-  display: inline-block;
-  color: var(--navy-mid);
-  font-size: 0.9rem;
-  margin-bottom: 6px;
+  padding: 32px 20px 8px;
 }
 
 .brand__title {
@@ -105,11 +78,167 @@ body {
 }
 
 /* ---------------------------------------------------------
+   Layout — sidebar / centered card / matching spacer
+--------------------------------------------------------- */
+.layout {
+  width: 100%;
+  max-width: 980px;
+  padding: 24px 20px 8px;
+  display: grid;
+  grid-template-columns: 220px 1fr 220px;
+  align-items: start;
+  gap: 24px;
+}
+
+.page {
+  grid-column: 2;
+  max-width: 460px;
+  width: 100%;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Invisible spacer that mirrors the sidebar's width, so the middle
+   column (the card) stays truly centered on the page instead of being
+   centered only in the leftover space next to the sidebar. */
+.layout::after {
+  content: "";
+  grid-column: 3;
+}
+
+/* ---------------------------------------------------------
+   Sidebar filters
+--------------------------------------------------------- */
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  padding: 22px 20px;
+  box-shadow:
+    12px 12px 24px var(--shadow-dark),
+    -12px -12px 24px var(--shadow-light);
+  position: sticky;
+  top: 24px;
+}
+
+.sidebar__title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.05rem;
+  margin: 0 0 4px;
+  color: var(--navy);
+}
+
+.sidebar__hint {
+  font-size: 0.75rem;
+  color: var(--navy-soft);
+  margin: 0 0 18px;
+  line-height: 1.4;
+}
+
+.combobox {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.combobox__label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--navy-soft);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.combobox__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.combobox__input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--navy);
+  background: var(--bg);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 32px 10px 12px;
+  box-shadow:
+    inset 3px 3px 8px var(--shadow-dark),
+    inset -3px -3px 8px var(--shadow-light);
+  outline: none;
+}
+
+.combobox__input::placeholder {
+  color: var(--navy-soft);
+  opacity: 0.7;
+}
+
+.combobox__chevron {
+  position: absolute;
+  right: 10px;
+  color: var(--navy-soft);
+  pointer-events: none;
+}
+
+.combobox__list {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  max-height: 220px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--white);
+  border-radius: var(--radius-sm);
+  box-shadow:
+    6px 6px 16px var(--shadow-dark),
+    -4px -4px 12px var(--shadow-light);
+}
+
+.combobox__list li {
+  padding: 8px 10px;
+  font-size: 0.88rem;
+  color: var(--navy);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.combobox__list li:hover {
+  background: var(--bg);
+}
+
+.clear-filters-btn {
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--navy-soft);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 6px 0 0;
+  text-decoration: underline;
+}
+
+.clear-filters-btn:hover {
+  color: var(--navy);
+}
+
+/* ---------------------------------------------------------
    Clay card
 --------------------------------------------------------- */
 .card {
   width: 100%;
-  background: var(--white);
+  background: var(--card-bg);
   border-radius: var(--radius-lg);
   padding: 32px 28px 28px;
   display: flex;
@@ -121,7 +250,6 @@ body {
     -12px -12px 24px var(--shadow-light);
 }
 
-/* Concave "inset" frame around the album cover — classic clay look */
 .cover-frame {
   width: 220px;
   height: 220px;
@@ -215,7 +343,7 @@ body {
 }
 
 .btn--spotify {
-  background: var(--white);
+  background: var(--card-bg);
   color: var(--navy);
   box-shadow:
     6px 6px 14px var(--shadow-dark),
@@ -257,7 +385,7 @@ body {
 --------------------------------------------------------- */
 .site-footer {
   width: 100%;
-  max-width: 460px;
+  max-width: 760px;
   padding: 20px 20px 32px;
   text-align: center;
 }
@@ -271,8 +399,27 @@ body {
 }
 
 /* ---------------------------------------------------------
-   Responsive
+   Responsive — sidebar stacks above the card on narrow screens
 --------------------------------------------------------- */
+@media (max-width: 760px) {
+  .layout {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .page {
+    margin: 0;
+  }
+
+  .sidebar {
+    width: 100%;
+    max-width: 460px;
+    position: static;
+    order: -1; /* sidebar appears above the card on mobile */
+  }
+}
+
 @media (max-width: 380px) {
   .cover-frame {
     width: 180px;
@@ -284,26 +431,15 @@ body {
   }
 }
 
-@media (min-width: 640px) {
-  .page {
-    padding-top: 48px;
-  }
-
-  .card {
-    padding: 40px 40px 34px;
-  }
-}
-
-/* Respect reduced-motion preferences */
 @media (prefers-reduced-motion: reduce) {
   .btn {
     transition: none;
   }
 }
 
-/* Visible keyboard focus */
 a:focus-visible,
-button:focus-visible {
+button:focus-visible,
+input:focus-visible {
   outline: 3px solid var(--navy-mid);
   outline-offset: 3px;
 }

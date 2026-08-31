@@ -7,10 +7,16 @@ No database, no local storage of Spotify Content.
 Flow per request to GET /api/random-song:
     1. Get a valid Client Credentials access token (reused in memory until
        it's close to expiring, then refreshed).
-    2. Pick a random search query from SPOTIFY_SEARCH_QUERIES and a random
-       offset, call Spotify's Search endpoint.
-    3. Pick one random track out of the returned results.
-    4. Return its metadata (including track_id, used to build the embed
+    2. If the request includes ?genre= and/or ?year= query params, build a
+       targeted search query from those (genre is matched as an actual
+       genre field via genre:"..." syntax, not a plain keyword). Otherwise,
+       pick a random search query from SPOTIFY_SEARCH_QUERIES (fully
+       random, as before).
+    3. Probe the query to find its real result count, then pick a random
+       offset guaranteed to be within that range (prevents narrow filters
+       from landing past the end of the result set and coming back empty).
+    4. Pick one random track out of the returned results.
+    5. Return its metadata (including track_id, used to build the embed
        player) directly to the frontend. Nothing is saved.
 """
 
@@ -20,7 +26,7 @@ import time
 
 import requests
 from dotenv import load_dotenv
-from flask import Flask, jsonify, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory
 from pathlib import Path
 
 load_dotenv()
@@ -86,8 +92,34 @@ def extract_metadata(track: dict):
         return None
 
 
-def fetch_random_track(max_attempts: int = 4):
-    if not SEARCH_QUERIES:
+def spotify_search(query: str, offset: int, headers: dict) -> tuple[dict, dict]:
+    """One search call. Returns (response_json, possibly-refreshed headers)."""
+    params = {
+        "q": query,
+        "type": "track",
+        "limit": RESULTS_PER_PAGE,
+        "offset": offset,
+    }
+
+    resp = requests.get(SEARCH_URL, headers=headers, params=params, timeout=10)
+
+    if resp.status_code == 401:
+        _token_cache["access_token"] = None
+        new_token = get_access_token()
+        headers = {"Authorization": f"Bearer {new_token}"}
+        resp = requests.get(SEARCH_URL, headers=headers, params=params, timeout=10)
+
+    if resp.status_code == 429:
+        retry_after = int(resp.headers.get("Retry-After", "1"))
+        time.sleep(min(retry_after, 3))
+        resp = requests.get(SEARCH_URL, headers=headers, params=params, timeout=10)
+
+    resp.raise_for_status()
+    return resp.json(), headers
+
+
+def fetch_random_track(max_attempts: int = 4, override_query: str | None = None):
+    if not override_query and not SEARCH_QUERIES:
         raise RuntimeError(
             "No search queries configured. Set SPOTIFY_SEARCH_QUERIES in your "
             "environment, e.g.: pop,rock,hip hop,year:2024,indie"
@@ -97,31 +129,32 @@ def fetch_random_track(max_attempts: int = 4):
     headers = {"Authorization": f"Bearer {token}"}
 
     for attempt in range(max_attempts):
-        query = random.choice(SEARCH_QUERIES)
-        offset = random.randrange(0, MAX_OFFSET + 1, RESULTS_PER_PAGE)
+        query = override_query if override_query else random.choice(SEARCH_QUERIES)
 
-        params = {
-            "q": query,
-            "type": "track",
-            "limit": RESULTS_PER_PAGE,
-            "offset": offset,
-        }
+        # Step 1: probe with offset=0 to learn how many results this exact
+        # query actually has. This prevents narrow filters (e.g. a precise
+        # genre match, or a single decade with no genre) from randomly
+        # requesting an offset past the end of the real result set, which
+        # Spotify just returns as empty.
+        probe_data, headers = spotify_search(query, offset=0, headers=headers)
+        total = probe_data.get("tracks", {}).get("total", 0)
 
-        resp = requests.get(SEARCH_URL, headers=headers, params=params, timeout=10)
+        if total == 0:
+            continue  # this query genuinely has no results, try again
 
-        if resp.status_code == 401:
-            _token_cache["access_token"] = None
-            token = get_access_token()
-            headers = {"Authorization": f"Bearer {token}"}
-            resp = requests.get(SEARCH_URL, headers=headers, params=params, timeout=10)
+        # Step 2: pick a random offset guaranteed to be within the real
+        # result count, capped at MAX_OFFSET for broad queries so we don't
+        # page absurdly deep into huge result sets.
+        highest_valid_offset = max(0, min(MAX_OFFSET, total - RESULTS_PER_PAGE))
+        highest_valid_offset -= highest_valid_offset % RESULTS_PER_PAGE
 
-        if resp.status_code == 429:
-            retry_after = int(resp.headers.get("Retry-After", "1"))
-            time.sleep(min(retry_after, 3))
-            continue
+        if highest_valid_offset == 0:
+            tracks = probe_data.get("tracks", {}).get("items", [])
+        else:
+            offset = random.randrange(0, highest_valid_offset + 1, RESULTS_PER_PAGE)
+            data, headers = spotify_search(query, offset=offset, headers=headers)
+            tracks = data.get("tracks", {}).get("items", [])
 
-        resp.raise_for_status()
-        tracks = resp.json().get("tracks", {}).get("items", [])
         if not tracks:
             continue
 
@@ -134,8 +167,33 @@ def fetch_random_track(max_attempts: int = 4):
 
 @app.get("/api/random-song")
 def random_song():
+    # Optional filters from the sidebar. Length-capped as a basic safety guard.
+    genre = request.args.get("genre", "").strip()[:40]
+    year = request.args.get("year", "").strip()[:20]
+
+    def build_query(use_genre_filter: bool) -> str | None:
+        parts = []
+        if genre:
+            # genre:"..." tells Spotify's search to match the genre field
+            # specifically, instead of treating e.g. "house" as a plain
+            # keyword that happens to match song/album titles containing
+            # that word (which was causing results like "House of Balloons").
+            parts.append(f'genre:"{genre}"' if use_genre_filter else genre)
+        if year:
+            parts.append(f"year:{year}")
+        return " ".join(parts) if parts else None
+
     try:
-        song = fetch_random_track()
+        # Try the precise genre-field filter first.
+        song = fetch_random_track(override_query=build_query(use_genre_filter=True))
+
+        # Some niche genre tags have very few or zero exact matches in
+        # Spotify's catalog. If the precise filter comes up empty, fall
+        # back to plain keyword search rather than showing an error —
+        # broader results are better than none, and this only triggers
+        # for genres too narrow to return anything on their own.
+        if song is None and genre:
+            song = fetch_random_track(override_query=build_query(use_genre_filter=False))
     except RuntimeError as e:
         return jsonify({"error": str(e)}), 500
     except requests.HTTPError as e:

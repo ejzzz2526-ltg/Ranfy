@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Ranfy</title>
-<meta name="description" content="Press the button, get one random song from Spotify. Nothing else." />
+<title>Ranfy — Random Spotify Song Generator | Discover New Music</title>
+<meta name="description" content="Click one button to get a totally random song from Spotify, picked from every genre and era. Filter by genre or decade, or leave it fully random." />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -12,59 +12,128 @@
 </head>
 <body>
 
-
-
-  <main class="page">
-    <header class="brand">
-      <span class="brand__mark"></span>
-      <h1 class="brand__title">Click</h1>
-      <p class="brand__subtitle">One random song. That's it.</p>
-    </header>
-
-    <section class="card" aria-live="polite">
-      <div class="cover-frame">
-        <img id="albumCover" class="cover-frame__img" src="" alt="" hidden />
-        <div id="coverPlaceholder" class="cover-frame__placeholder">
-          <span>♪</span>
-        </div>
-      </div>
-
-      <div class="track-info">
-        <div id="embedWrapper" class="embed-wrapper" hidden>
-  <iframe
-    id="embedPlayer"
-    class="embed-wrapper__iframe"
-    src=""
-    width="100%"
-    height="80"
-    frameborder="0"
-    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-    loading="lazy">
-  </iframe>
-</div>
-        <h2 id="songTitle" class="track-info__title">Press Random Song to begin</h2>
-        <p id="artistName" class="track-info__artist">&nbsp;</p>
-      </div>
-
-      <a id="spotifyLink" class="btn btn--spotify" href="#" target="_blank" rel="noopener noreferrer" hidden>
-        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-          <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 14.41c-.19.31-.59.41-.9.22-2.47-1.51-5.58-1.85-9.25-1.01-.35.08-.7-.14-.78-.49-.08-.35.14-.7.49-.78 4.01-.92 7.45-.52 10.22 1.16.31.19.41.59.22.9zm1.22-2.72c-.24.39-.75.51-1.14.27-2.83-1.74-7.14-2.24-10.49-1.23-.44.13-.9-.12-1.03-.55-.13-.44.12-.9.55-1.03 3.82-1.16 8.57-.6 11.84 1.4.39.24.51.75.27 1.14zm.11-2.83C14.34 8.85 8.98 8.67 5.9 9.62c-.52.16-1.08-.14-1.24-.66-.16-.52.14-1.08.66-1.24 3.53-1.08 9.42-.87 13.14 1.34.47.28.62.89.34 1.36-.28.47-.89.62-1.36.34z"/>
-        </svg>
-        Listen on Spotify
-      </a>
-
-      <button id="randomBtn" class="btn btn--primary">
-        Random Song
-      </button>
-
-      <p class="attribution">Song data and artwork provided by Spotify.</p>
-    </section>
-
+  <header class="brand">
     
-  </main>
+    <p class="brand__subtitle">Filtering feature might be inaccurate.</p>
+  </header>
+
+  <div class="layout">
+
+    <aside class="sidebar">
+      <h2 class="sidebar__title">Filters</h2>
+      <p class="sidebar__hint">Optional — leave blank for a fully random pick.</p>
+
+      <div class="combobox" id="genreCombobox">
+        <label class="combobox__label" for="genreInput">Genre</label>
+        <div class="combobox__control">
+          <input type="text" id="genreInput" class="combobox__input" placeholder="Any genre" autocomplete="off" />
+          <svg class="combobox__chevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path fill="currentColor" d="M7 10l5 5 5-5z"/>
+          </svg>
+        </div>
+        <ul class="combobox__list" hidden>
+          <li data-value="">Any genre</li>
+          <li data-value="pop">Pop</li>
+          <li data-value="rock">Rock</li>
+          <li data-value="hip hop">Hip Hop</li>
+          <li data-value="r&b">R&amp;B</li>
+          <li data-value="indie">Indie</li>
+          <li data-value="electronic">Electronic</li>
+          <li data-value="dance">Dance</li>
+          <li data-value="house">House</li>
+          <li data-value="techno">Techno</li>
+          <li data-value="jazz">Jazz</li>
+          <li data-value="blues">Blues</li>
+          <li data-value="classical">Classical</li>
+          <li data-value="country">Country</li>
+          <li data-value="folk">Folk</li>
+          <li data-value="metal">Metal</li>
+          <li data-value="punk">Punk</li>
+          <li data-value="reggae">Reggae</li>
+          <li data-value="reggaeton">Reggaeton</li>
+          <li data-value="latin">Latin</li>
+          <li data-value="k-pop">K-Pop</li>
+          <li data-value="j-pop">J-Pop</li>
+          <li data-value="afrobeats">Afrobeats</li>
+          <li data-value="soul">Soul</li>
+          <li data-value="funk">Funk</li>
+          <li data-value="disco">Disco</li>
+          <li data-value="gospel">Gospel</li>
+          <li data-value="ambient">Ambient</li>
+          <li data-value="lo-fi">Lo-fi</li>
+          <li data-value="acoustic">Acoustic</li>
+          <li data-value="alternative">Alternative</li>
+          <li data-value="edm">EDM</li>
+          <li data-value="trap">Trap</li>
+          <li data-value="drill">Drill</li>
+          <li data-value="grunge">Grunge</li>
+          <li data-value="synthwave">Synthwave</li>
+        </ul>
+      </div>
+
+      <div class="combobox" id="yearCombobox">
+        <label class="combobox__label" for="yearInput">Era</label>
+        <div class="combobox__control">
+          <input type="text" id="yearInput" class="combobox__input" placeholder="Any era" autocomplete="off" />
+          <svg class="combobox__chevron" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+            <path fill="currentColor" d="M7 10l5 5 5-5z"/>
+          </svg>
+        </div>
+        <ul class="combobox__list" hidden>
+          <li data-value="">Any era</li>
+          <li data-value="1950-1959">1950s</li>
+          <li data-value="1960-1969">1960s</li>
+          <li data-value="1970-1979">1970s</li>
+          <li data-value="1980-1989">1980s</li>
+          <li data-value="1990-1999">1990s</li>
+          <li data-value="2000-2009">2000s</li>
+          <li data-value="2010-2019">2010s</li>
+          <li data-value="2020-2022">2020–2022</li>
+          <li data-value="2023">2023</li>
+          <li data-value="2024">2024</li>
+          <li data-value="2025">2025</li>
+          <li data-value="2026">2026</li>
+        </ul>
+      </div>
+
+      <button id="clearFiltersBtn" class="clear-filters-btn" type="button">Clear filters</button>
+    </aside>
+
+    <main class="page">
+      <section class="card" aria-live="polite">
+        <div class="cover-frame">
+          <img id="albumCover" class="cover-frame__img" src="" alt="" hidden />
+          <div id="coverPlaceholder" class="cover-frame__placeholder">
+            <span>♪</span>
+          </div>
+        </div>
+
+        <div class="track-info">
+          <h2 id="songTitle" class="track-info__title">Press Random Song to begin</h2>
+          <p id="artistName" class="track-info__artist">&nbsp;</p>
+        </div>
+
+        <div id="embedWrapper" class="embed-wrapper" hidden></div>
+
+        <a id="spotifyLink" class="btn btn--spotify" href="#" target="_blank" rel="noopener noreferrer" hidden>
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.59 14.41c-.19.31-.59.41-.9.22-2.47-1.51-5.58-1.85-9.25-1.01-.35.08-.7-.14-.78-.49-.08-.35.14-.7.49-.78 4.01-.92 7.45-.52 10.22 1.16.31.19.41.59.22.9zm1.22-2.72c-.24.39-.75.51-1.14.27-2.83-1.74-7.14-2.24-10.49-1.23-.44.13-.9-.12-1.03-.55-.13-.44.12-.9.55-1.03 3.82-1.16 8.57-.6 11.84 1.4.39.24.51.75.27 1.14zm.11-2.83C14.34 8.85 8.98 8.67 5.9 9.62c-.52.16-1.08-.14-1.24-.66-.16-.52.14-1.08.66-1.24 3.53-1.08 9.42-.87 13.14 1.34.47.28.62.89.34 1.36-.28.47-.89.62-1.36.34z"/>
+          </svg>
+          Listen on Spotify
+        </a>
+
+        <button id="randomBtn" class="btn btn--primary">
+          Random Song
+        </button>
+
+        <p class="attribution">Song data, artwork, and playback provided by Spotify.</p>
+      </section>
+    </main>
+
+  </div>
 
   <footer class="site-footer">
-    <p>Not affiliated with Spotify AB. All track metadata and cover art belong to their respective owners and are provided via the Spotify platform.</p>
+    <p>Not affiliated with Spotify AB. All track metadata, cover art, and playback belong to their respective owners and are provided via the Spotify platform.</p>
   </footer>
 
   <script src="script.js"></script>
